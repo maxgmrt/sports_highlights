@@ -55,37 +55,37 @@ def valAccTimesAcc(val_acc, acc):
     return val_acc*acc
 
 
-def trainModel(nEpochs, nameString):
+def trainModel(nEpochs, gameNames):
     model = generateModel()
 
     model.compile(loss='binary_crossentropy',
                   optimizer=keras.optimizers.Adam(lr=0.0001),
                   metrics=['accuracy', valAccTimesAcc])
 
+    MFC_lowlight = []
+    MFC_highlight = []
 
-    MFC_lowlight = load_images_from_folder('mfcc/%s_train_l'%(nameString))
-    MFC_highlight = load_images_from_folder('mfcc/%s_train_h'%(nameString))
+    for g in gameNames:
+        MFC_lowlight = MFC_lowlight + load_images_from_folder('mfcc/train/%s_train_l'%(g))
+        MFC_highlight = MFC_highlight + load_images_from_folder('mfcc/train/%s_train_h'%(g))
 
     MFC_train = MFC_highlight + MFC_lowlight
 
     print('number of total training mfcc: %s' % len(MFC_train))
 
-    X_train = []
-    y_train = []
-
     X_train = np.asarray(MFC_train)
     X_train = np.array([x.reshape( (40, 33, 1) ) for x in X_train])
 
+    y_train = []
     for i in range(len(MFC_highlight)):
         y_train.append(1)
 
     for i in range(len(MFC_lowlight)):
         y_train.append(0)
 
-
     y_train = np.asarray(y_train)
 
-    classWeight = {0:(len(MFC_lowlight)/len(MFC_train)), 1:(len(MFC_highlight)/len(MFC_train))}
+    classWeight = {0:float(len(MFC_lowlight)/len(MFC_train)), 1:float(len(MFC_highlight)/len(MFC_train))}
     batch_size = 25
 
     x_train_split, x_val, y_train_split, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)

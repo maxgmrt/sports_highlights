@@ -1,34 +1,25 @@
-import get_highlight_list_groundtruth
-from get_highlight_list_groundtruth import get_highlight_list
-import utils
-import model
 from audio_processing import generateTrainingMFCCs
-import post_processing
 from post_processing import hangover_highlights
 import getopt
 import sys
-import utils
 import keras
 from utils import load_images_from_folder
-from utils import frameToTimestamp
 import numpy as np
-import cv2
-import librosa
 from model import trainModel
+from get_highlight_list_groundtruth import processGroundTruth
+import os
+from os import listdir
 
 ''' 
 Main script. 
 Identifies timeouts and highlights of a football game analyzing audio.
 mandatory arguments:
-<-a, --audio>: defines the path to the audio folder
+<-t, --trainingBool>: 
 
-<-v, --video>: defines the path to the video files
+<-g, --generateGroundTruth>: 
 
-<-n, --name>: defines the name of the game (ex: PSGvSCO)
-
-<-t, --train>: defines if training needs to be performed
+<-a, --audioTestFile>:
 '''
-
 
 # Get the arguments from the command-line except the filename
 argv = sys.argv[1:]
@@ -47,12 +38,12 @@ try:
 # Training Boolean. If set to True, the program will train a neural network on labelled MFC Spectrograms,
 # generated thanks to audio in audio/train and labels in labels/
             if opt in ("-t", "--train"):
-                trainingBool = arg
+                trainingBool = int(arg)
 
 # Generate Ground-Truth Boolean. If set to True, the program will use the training videos (game footage + summaries)
-# in video/train, compare them using similarity analysis in order to extract a list of highlights timestamps
+# in video/, compare them using similarity analysis in order to extract a list of highlights timestamps
             elif opt in ("-g", "--generategroundtruth"):
-                generateGroundTruth = arg
+                generateGroundTruth = int(arg)
 
 # Path to audio test file.
             elif opt in ("-a", "--testaudio"):
@@ -63,52 +54,29 @@ except getopt.GetoptError:
     print('usage: main.py -a <audio_path> -v <videos_path> -n <name_of_game> -t <training_parameter> -g <generateGroundTruth>')
     sys.exit(2)
 
-nEpochs = 30
-framesPath = 'video/%s_frames'%(nameString) # typically ../video/PSGvSCO_frames/
-labelsPath = 'labels'
 
-# LOADING THE AUDIO
-#audMonoGame, sample_rate = librosa.load(audioPath, sr=16000, mono=True)
+gameNames = []
+for f in listdir('video'):
+    path = os.path.join('video', f)
+    if os.path.isdir(path):
+        # skip directories
+        continue
+    gameNames.append(f.replace(".mp4", ""))
 
 # If user wants to compare the summary and the game footage to extract highlights frames to train the model on.
 if (generateGroundTruth == 1):
-    # DELEGUER A UN SOUS-FICHIER !
-    overwrite=True
-    every=100
-    chunk_size=1000
+    print("Succesfully entered Ground-Truth generation!")
+    processGroundTruth(gameNames)
 
-    gamePath = '%s/%s.mp4' % (videosPath, nameString)
-    sumPath = '%s/%s_sum.mp4' % (videosPath, nameString)
-    print(gamePath)
-    print(sumPath)
-    cap = cv2.VideoCapture(gamePath)
-    fps_game = cap.get(cv2.CAP_PROP_FPS)
-    print(fps_game)
-    cap = cv2.VideoCapture(sumPath)
-    fps_sum = cap.get(cv2.CAP_PROP_FPS)
-    print(fps_sum)
-    # Returns the frame numbers of the highlights in the original game footage
-    highlights_frame_number = get_highlight_list(gamePath, sumPath, framesPath, overwrite, every, chunk_size)
-    # and the timestamps
-    highlights_timestamps = frameToTimestamp(highlights_frame_number, fps_game)
 
-    # ADD THE LOWLIGHT PART !
-    lowlight_timestamps = []
+if (trainingBool == 1):
+    nEpochs = 30
+    # Generation of training MFCCs
+    for g in gameNames:
+        generateTrainingMFCCs('audio/train', 'labels', g)
 
-    highlights_timestamps_train = highlights_timestamps
-    lowlights_timestamps_train = lowlight_timestamps
-
-highlights_timestamps_test = []
-lowlights_timestamps_test = []
-
-if (trainingBool):
-    audioTrainPath = '%s/train'% (audiosPath)
-    generateTrainingMFCCs(audioTrainPath, labelsPath, nameString)
-    #generateMFCC(audioPath, nameString, highlights_timestamps = [], lowlights_timestamps = [], macro=True, test=False)
-    #generateMFCC(audiosPath, nameString, highlights_timestamps_test, lowlights_timestamps_train, macro=False, test=True)
-    #generateMFCC(audioPath, nameString, highlights_timestamps = [], lowlights_timestamps = [], macro=True, test=True)
-# TRAINING
-    trained_model = trainModel(nEpochs, nameString)
+    # load mfcc correctly
+    trained_model = trainModel(nEpochs, gameNames)
 
 else:
     trained_model = keras.models.load_model('model.h5')

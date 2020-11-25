@@ -111,7 +111,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
 
 def generateTrainingMFCCs(audiosTrainPath, labelsPath, nameString):
-
+    print("Generating training MFCCs...")
     for filename in os.listdir(audiosTrainPath):
         #nameString = filename.replace(".mp3", "")  # get rid of the .mp3 extension
         #list = []
@@ -125,7 +125,7 @@ def generateTrainingMFCCs(audiosTrainPath, labelsPath, nameString):
                 highlights_timestamps.append(int(row[0]))
             if row[1] > 0:
                 lowlights_timestamps.append(int(row[1]))
-        print(lowlights_timestamps)
-        print(lowlights_timestamps[10])
+
         audioFile = '%s/%s.mp3'%(audiosTrainPath, nameString)
         generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timestamps)
+    print("Successfully generated training MFCCs!")
