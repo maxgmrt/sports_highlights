@@ -1,4 +1,5 @@
 from audio_processing import generateTrainingMFCCs
+from audio_processing import generateMFCC
 from post_processing import hangover_highlights
 import getopt
 import sys
@@ -18,6 +19,8 @@ mandatory arguments:
 
 <-g, --generateGroundTruth>: 
 
+<-m, --saveMFCC>:
+
 <-a, --audioTestFile>:
 '''
 
@@ -27,10 +30,10 @@ sum = 0
 
 try:
     # Define the getopt parameters
-    opts, args = getopt.getopt(argv, 't:g:a:', ['trainingBool', 'generateGroundTruth', 'audioTestFile'])
+    opts, args = getopt.getopt(argv, 't:g:m:a:', ['trainingBool', 'generateGroundTruth', 'saveMFCC', 'audioTestFile'])
     # Check if the options' length is 2 (can be enhanced)
     if len(opts) == 0 and len(opts) > 5:
-        print ('usage: main.py -t <trainingBool> -g <generateGroundTruth> -a <audioTestFile>')
+        print ('usage: main.py -t <trainingBool> -g <generateGroundTruth> -m <saveMFCC> -a <audioTestFile>')
     else:
       # Iterate the options and get the corresponding values
         for opt, arg in opts:
@@ -44,6 +47,10 @@ try:
 # in video/, compare them using similarity analysis in order to extract a list of highlights timestamps
             elif opt in ("-g", "--generategroundtruth"):
                 generateGroundTruth = int(arg)
+
+# Generate MFCC Boolean. If set to True, the program will generate MFC Spectrogram images and save them in local/mfcc/
+            elif opt in ("-m", "--savemfcc"):
+                saveMFCC = int(arg)
 
 # Path to audio test file.
             elif opt in ("-a", "--testaudio"):
@@ -71,9 +78,10 @@ if (generateGroundTruth == 1):
 
 if (trainingBool == 1):
     nEpochs = 30
-    # Generation of training MFCCs
-    for g in gameNames:
-        generateTrainingMFCCs('audio/train', 'labels', g)
+    if (saveMFCC == 1):
+        # Generation of training MFCCs
+        for g in gameNames:
+            generateTrainingMFCCs('audio/train', 'labels', g)
 
     # load mfcc correctly
     trained_model = trainModel(nEpochs, gameNames)
@@ -85,17 +93,18 @@ else:
 #
 #
 #
+if (audioTestFile):
+    generateMFCC(audioTestFile, audioTestFile.replace(".mp3", ""),  [], [], macro=False, test=True)
+    MFC_test = load_images_from_folder('mfcc/test/%s'%(audioTestFile.replace(".mp3", "")))
 
-MFC_test = load_images_from_folder('mfcc/%s_test_l'%(nameString))
+    X_test = np.asarray(MFC_test)
+    X_test = np.array([x.reshape( (40, 33, 1) ) for x in X_test])
+    y_test = np.ones(len(MFC_test))
 
-X_test = np.asarray(MFC_test)
-X_test = np.array([x.reshape( (40, 33, 1) ) for x in X_test])
-y_test = np.ones(200)
-
-trained_model = keras.models.load_model('model.h5')
-prediction = trained_model.predict(X_test)
-prediction = np.asarray(prediction)
-hangover_prediction = hangover_highlights(prediction)
+    trained_model = keras.models.load_model('model.h5')
+    prediction = trained_model.predict(X_test)
+    prediction = np.asarray(prediction)
+    hangover_prediction = hangover_highlights(prediction)
 
 print(hangover_prediction)
 

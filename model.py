@@ -66,8 +66,8 @@ def trainModel(nEpochs, gameNames):
     MFC_highlight = []
 
     for g in gameNames:
-        MFC_lowlight = MFC_lowlight + load_images_from_folder('mfcc/train/%s_train_l'%(g))
-        MFC_highlight = MFC_highlight + load_images_from_folder('mfcc/train/%s_train_h'%(g))
+        MFC_lowlight = MFC_lowlight + load_images_from_folder('mfcc/train/%s_l'%(g))
+        MFC_highlight = MFC_highlight + load_images_from_folder('mfcc/train/%s_h'%(g))
 
     MFC_train = MFC_highlight + MFC_lowlight
 

@@ -5,13 +5,14 @@ import numpy as np
 import os
 import csv
 from numpy import genfromtxt
+from skimage import img_as_ubyte
 
 # outputs the one-channel version of a two-channels audio file
 def getMono(audio_data):
     return audio_data.sum(axis=1) / 2
 
 # returns the amplitude of a mono audio block of duration (t2-t1)
-def getEnergyBlockTime(audio_data,t1,t2):
+def getEnergyBlockTime(audio_data, t1, t2, rate):
     n1 = t1 * rate
     n2 = t2 * rate
     return np.sum(audio_data[n1:n2]**2)
@@ -72,8 +73,21 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         multiplier = 5
         prefix = 'MACRO_'
 
-    if (test):
-        text = 'test'
+    if (test == True):
+
+        nMFCinSec = int(10/multiplier)
+        hop_length = int(multiplier * sample_rate / 32)
+        for h in range(len(audMono)/sample_rate):
+            for i in range(nMFCinSec):
+                if not os.path.exists('mfcc/test/%s/'%(nameString)):
+                    os.makedirs('mfcc/test/%s/'%(nameString))
+                out = 'mfcc/test/%s/MFC_%s_%s.png'%(nameString,h,i)
+                # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
+                start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
+                # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
+                stop = int(start + multiplier*sample_rate)
+
+                write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
 
     for h in highlights_timestamps:
         h = int(h)
@@ -82,32 +96,32 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         hop_length = int(multiplier * sample_rate / 32)
 
         for i in range(nMFCinSec):
-            if not os.path.exists('mfcc/%s%s_%s_h/'%(prefix,nameString,text)):
-                os.makedirs('mfcc/%s%s_%s_h/'%(prefix,nameString,text))
-            out = 'mfcc/%s%s_%s_h/MFC_%s_%s.png'%(prefix,nameString,text,h,i)
+            if not os.path.exists('mfcc/%s/%s%s_h/'%(text,prefix,nameString)):
+                os.makedirs('mfcc/%s/%s%s_h/'%(text,prefix,nameString))
+            out = 'mfcc/%s/%s%s_h/MFC_%s_%s.png'%(text,prefix,nameString,h,i)
             # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
             start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
             stop = int(start + multiplier*sample_rate)
 
-            specs.append(write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True))
-
+            write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
 
     for l in lowlights_timestamps:
+        l = int(l)
         specs = []
-        nMFCinSec = int(10/multiplier)
+        nMFCinSec = int(10 / multiplier)
         hop_length = int(multiplier * sample_rate / 32)
 
         for i in range(nMFCinSec):
-            if not os.path.exists('mfcc/%s%s_%s_l/'%(prefix,nameString,text)):
-                os.makedirs('mfcc/%s%s_%s_l/'%(prefix,nameString,text))
-            out = 'mfcc/%s%s_%s_l/MFC_%s_%s.png'%(prefix,nameString,text,h,i)
+            if not os.path.exists('mfcc/%s/%s%s_l/' % (text, prefix, nameString)):
+                os.makedirs('mfcc/%s/%s%s_l/' % (text, prefix, nameString))
+            out = 'mfcc/%s/%s%s_l/MFC_%s_%s.png' % (text, prefix, nameString, l, i)
             # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
-            start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
+            start = int(h * sample_rate + i * (sample_rate / (10 / multiplier)))
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
-            stop = int(start + multiplier*sample_rate)
+            stop = int(start + multiplier * sample_rate)
 
-            specs.append(write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True))
+            write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
 
 
 def generateTrainingMFCCs(audiosTrainPath, labelsPath, nameString):
