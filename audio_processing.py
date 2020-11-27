@@ -77,7 +77,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
         nMFCinSec = int(10/multiplier)
         hop_length = int(multiplier * sample_rate / 32)
-        for h in range(len(audMono)/sample_rate):
+        for h in range(int(len(audMono)/sample_rate)):
             for i in range(nMFCinSec):
                 if not os.path.exists('mfcc/test/%s/'%(nameString)):
                     os.makedirs('mfcc/test/%s/'%(nameString))

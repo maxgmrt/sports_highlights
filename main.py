@@ -4,6 +4,8 @@ from post_processing import hangover_highlights
 import getopt
 import sys
 import keras
+from keras.models import load_model
+from model import generateModel
 from utils import load_images_from_folder
 import numpy as np
 from model import trainModel
@@ -77,7 +79,7 @@ if (generateGroundTruth == 1):
 
 
 if (trainingBool == 1):
-    nEpochs = 30
+    nEpochs = 20
     if (saveMFCC == 1):
         # Generation of training MFCCs
         for g in gameNames:
@@ -87,21 +89,21 @@ if (trainingBool == 1):
     trained_model = trainModel(nEpochs, gameNames)
 
 else:
-    trained_model = keras.models.load_model('model.h5')
-
+    trained_model = generateModel()
+    trained_model.load_weights('model_weights.h5')
 # PREDICTION
 #
 #
 #
 if (audioTestFile):
-    generateMFCC(audioTestFile, audioTestFile.replace(".mp3", ""),  [], [], macro=False, test=True)
-    MFC_test = load_images_from_folder('mfcc/test/%s'%(audioTestFile.replace(".mp3", "")))
+    nameStringTest = audioTestFile.replace(".mp3", "").replace("audio/test/","")
+    generateMFCC(audioTestFile, nameStringTest,  [], [], macro=False, test=True)
+    MFC_test = load_images_from_folder('mfcc/test/%s' % nameStringTest)
 
     X_test = np.asarray(MFC_test)
     X_test = np.array([x.reshape( (40, 33, 1) ) for x in X_test])
     y_test = np.ones(len(MFC_test))
 
-    trained_model = keras.models.load_model('model.h5')
     prediction = trained_model.predict(X_test)
     prediction = np.asarray(prediction)
     hangover_prediction = hangover_highlights(prediction)

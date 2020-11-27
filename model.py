@@ -86,22 +86,19 @@ def trainModel(nEpochs, gameNames):
     y_train = np.asarray(y_train)
 
     classWeight = {0:float(len(MFC_lowlight)/len(MFC_train)), 1:float(len(MFC_highlight)/len(MFC_train))}
+    print('class distribution is %s / %s' % (float(len(MFC_lowlight)/len(MFC_train)), float(len(MFC_highlight)/len(MFC_train))))
     batch_size = 25
 
     x_train_split, x_val, y_train_split, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
-
-    # Early stopping callback
-    early_stopping_callback = keras.callbacks.EarlyStopping(monitor='valAccTimesAcc',
-                                  min_delta=0,
-                                  patience=5,
-                                  verbose=1, mode='max')
 
     # Checkpoint callback
     checkpoint_callback = ModelCheckpoint('model'+'.h5', monitor='valAccTimesAcc', verbose=1, save_best_only=True, mode='max')
 
     # Train Model
     trained_model = model.fit(x_train_split, y_train_split, shuffle = True, batch_size=20, class_weight = classWeight,
-                steps_per_epoch = len(x_train_split) / batch_size, validation_data = (x_val, y_val),
+                steps_per_epoch = int(len(x_train_split) / batch_size), validation_data = (x_val, y_val),
                 epochs = nEpochs, callbacks = [checkpoint_callback])
+
+    model.save_weights('model_weights.h5')
 
     return trained_model
