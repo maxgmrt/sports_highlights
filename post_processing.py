@@ -28,7 +28,7 @@ def processPrediction(prediction):
 
     processedPred = []
     for i in prediction:
-        if (maxPred - i) ^ 2 > (minPred - i) ^ 2:
+        if (maxPred - i)**2 > (minPred - i)**2:
             processedPred.append(0)
         else:
             processedPred.append(1)
