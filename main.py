@@ -1,7 +1,4 @@
 from audio_processing import generateTrainingMFCCs
-from audio_processing import generateMFCC
-from post_processing import hangover_highlights
-from post_processing import processPrediction
 import getopt
 import sys
 import keras
@@ -9,6 +6,7 @@ from keras.models import load_model
 from model import generateModel
 from utils import load_images_from_folder
 import numpy as np
+from test import generatePrediction
 from model import trainModel
 from get_highlight_list_groundtruth import processGroundTruth
 import os
@@ -97,25 +95,11 @@ else:
 #
 #
 if (audioTestFile):
-    nameStringTest = audioTestFile.replace(".mp3", "").replace("audio/test/","")
-    generateMFCC(audioTestFile, nameStringTest,  [], [], macro=False, test=True)
-    MFC_test = load_images_from_folder('mfcc/test/%s' % nameStringTest)
-    MFC_test_shaped = []
-    for m in MFC_test:
-        if (m.shape[0] == 40) & (m.shape[1] == 33):
-            MFC_test_shaped.append(m)
-    X_test = np.asarray(MFC_test_shaped)
-    X_test = np.array([x.reshape( (40, 33, 1) ) for x in X_test])
-    y_test = np.ones(len(MFC_test))
+    prediction, baseline, test_reference = generatePrediction(audioTestFile, trained_model)
+    print(prediction.shape[0])
+    print(baseline.shape[0])
+    print(test_reference.shape[0])
 
-    prediction = trained_model.predict(X_test)
-    prediction_array = np.asarray(prediction)
-    hangover_prediction = hangover_highlights(prediction_array)
-    processedPrediction = processPrediction(prediction_array)
-
-print(hangover_prediction)
-
-print(processedPrediction)
+    # Print accuracies for each approach
 
 
-#getBaselinePrediction(audMonoGame, sample_rate)

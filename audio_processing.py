@@ -22,17 +22,22 @@ def getEnergyBlockFrame(audio_data,n1,n2):
     return np.sum(audio_data[n1:n2]**2)
 
 
-def getBaselinePrediction(audMono, sample_rate):
+def getBaselinePrediction(audioFile):
+    audMono, sample_rate = librosa.load(audioFile, sr=16000, mono=True)
     energy = []
     for i in range(int(len(audMono)/sample_rate)-1):
         energy.append(getEnergyBlockFrame(audMono, sample_rate*i, sample_rate*(i+1)))
         
-    energy = np.asarray(energy)
+    energy_array = np.asarray(energy)
+    max_energy = max(energy_array)
 
-    highlights = np.where(energy>0.95*max(energy))
-    lowlights = np.where(energy < 1.05 * min(energy))
-
-    return highlights, lowlights
+    baseline = []
+    for e in energy:
+        if e > 0.9 * max_energy:
+            baseline.append(1)
+        else:
+            baseline.append(0)
+    return baseline
 
 
 def scale_minmax(X, min=0.0, max=1.0):

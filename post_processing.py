@@ -1,6 +1,6 @@
 import numpy as np
 
-def hangover_highlights(prediction):
+def hangover_highlights(prediction, threshold):
     average_prediction = []
     hangover_prediction = []
 
@@ -8,11 +8,11 @@ def hangover_highlights(prediction):
         average_prediction.append(np.mean(prediction[i:i+9]))
         
     for i in range(int(len(average_prediction)/5-5)):
-        if ((average_prediction[5*i]>0.5)&
-            (average_prediction[5*i+1]>0.5)&
-            (average_prediction[5*i+2]>0.5)&
-            (average_prediction[5*i+3]>0.5)&
-            (average_prediction[5*i+4]>0.5)):
+        if ((average_prediction[5*i]>threshold)&
+            (average_prediction[5*i+1]>threshold)&
+            (average_prediction[5*i+2]>threshold)&
+            (average_prediction[5*i+3]>threshold)&
+            (average_prediction[5*i+4]>threshold)):
             
             hangover_prediction.append(1)
         
