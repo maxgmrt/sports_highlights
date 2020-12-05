@@ -133,7 +133,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
 
     for h in highlights_timestamps:
-        print(h)
+        print("Saving Highlight MFCC at timestamp %s s" % h)
         h = int(h)
         specs = []
         nMFCinSec = int(10/multiplier)
@@ -152,7 +152,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
 
     for l in lowlights_timestamps:
-        print(l)
+        print("Saving Lowlight MFCC at timestamp %s s" % l)
         l = int(l)
         specs = []
         nMFCinSec = int(10 / multiplier)
@@ -173,8 +173,9 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 def generateTrainingMFCCs(audiosTrainPath, labelsPath, nameString):
     print("Generating training MFCCs...")
     for filename in os.listdir(audiosTrainPath):
-        #nameString = filename.replace(".mp3", "")  # get rid of the .mp3 extension
+        nameString = filename.replace(".mp3", "")  # get rid of the .mp3 extension
         #list = []
+        print(filename)
 
         highlights_timestamps = []
         lowlights_timestamps = []
