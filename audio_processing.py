@@ -33,11 +33,48 @@ def getBaselinePrediction(audioFile):
 
     baseline = []
     for e in energy:
-        if e > 0.9 * max_energy:
+        if e > 0.8 * max_energy:
             baseline.append(1)
         else:
             baseline.append(0)
     return baseline
+
+
+def getVoxIsolatedMFC(audioTestFile):
+    audMono, sample_rate = librosa.load(audioTestFile, sr=16000, mono=True)
+
+    S_test = []
+    for i in range(int(len(audMono)/sample_rate-5)):
+        S_full, phase = librosa.magphase(librosa.stft(audMono[i*sample_rate:sample_rate*(i+5)]))
+        S_filter = librosa.decompose.nn_filter(S_full,
+                                           aggregate=np.median,
+                                           metric='cosine',
+                                           width=int(librosa.time_to_frames(2, sr=sample_rate)))
+
+    # The output of the filter shouldn't be greater than the input
+    # if we assume signals are additive.  Taking the pointwise minimium
+    # with the input spectrum forces this.
+        S_filter = np.minimum(S_full, S_filter)
+
+        margin_i, margin_v = 2, 10
+        power = 2
+
+        mask_i = librosa.util.softmask(S_filter,
+                                   margin_i * (S_full - S_filter),
+                                   power=power)
+
+        mask_v = librosa.util.softmask(S_full - S_filter,
+                                   margin_v * S_filter,
+                                   power=power)
+
+    # Once we have the masks, simply multiply them with the input spectrum
+    # to separate the components
+
+        S_vox = mask_v * S_full
+        S_test.append(S_vox)
+
+    #S_foreground is the spectrogram of the isolated speech
+    return S_test, sample_rate
 
 
 def scale_minmax(X, min=0.0, max=1.0):
@@ -55,13 +92,14 @@ def write_mfcc_image(y, sr, out, hop_length, write=False):
     #mels = np.log(mels + 1e-9) # add small number to avoid log(0)
 
     # min-max scale to fit inside 8-bit range
-    img = scale_minmax(mels, 0, 255).astype(np.uint8)
+    img = scale_minmax(mels, 0, 255)
     #img = np.flip(img, axis=0) # put low frequencies at the bottom in image
     #img = 255-img # invert. make black==more energy
+    img = np.uint8(img)
     if(write == True):
     # save as PNG
-        skimage.io.imsave(out, mels)
-    return mels
+        skimage.io.imsave(out, img)
+    return img
 
 
 def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timestamps, macro=False, test=False):
@@ -79,7 +117,6 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         prefix = 'MACRO_'
 
     if (test == True):
-
         nMFCinSec = int(10/multiplier)
         hop_length = int(multiplier * sample_rate / 32)
         for h in range(int(len(audMono)/sample_rate)):
@@ -91,10 +128,12 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
                 start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
                 # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
                 stop = int(start + multiplier*sample_rate)
-
+                # Generates 10 MFC Spectrograms per second on the whole audio file
                 write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
 
+
     for h in highlights_timestamps:
+        print(h)
         h = int(h)
         specs = []
         nMFCinSec = int(10/multiplier)
@@ -111,7 +150,9 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
             write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
 
+
     for l in lowlights_timestamps:
+        print(l)
         l = int(l)
         specs = []
         nMFCinSec = int(10 / multiplier)

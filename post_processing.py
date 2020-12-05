@@ -7,12 +7,18 @@ def hangover_highlights(prediction, threshold):
     for i in range(len(prediction)-10):
         average_prediction.append(np.mean(prediction[i:i+9]))
         
-    for i in range(int(len(average_prediction)/5-5)):
-        if ((average_prediction[5*i]>threshold)&
-            (average_prediction[5*i+1]>threshold)&
-            (average_prediction[5*i+2]>threshold)&
-            (average_prediction[5*i+3]>threshold)&
-            (average_prediction[5*i+4]>threshold)):
+    for i in range(int(len(average_prediction)/10-10)):
+        if ((average_prediction[10 * i] > threshold) &
+            (average_prediction[10 * i + 1] > threshold) &
+            (average_prediction[10 * i + 2] > threshold) &
+            (average_prediction[10 * i + 3] > threshold) &
+            (average_prediction[10 * i + 4] > threshold) &
+            (average_prediction[10 * i + 5] > threshold) &
+            (average_prediction[10 * i + 6] > threshold) &
+            (average_prediction[10 * i + 7] > threshold) &
+            (average_prediction[10 * i + 8] > threshold) &
+            (average_prediction[10 * i + 9] > threshold)
+        ):
             
             hangover_prediction.append(1)
         

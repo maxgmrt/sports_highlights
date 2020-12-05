@@ -4,13 +4,19 @@ import sys
 import keras
 from keras.models import load_model
 from model import generateModel
+from model import valAccTimesAcc
 from utils import load_images_from_folder
 import numpy as np
 from test import generatePrediction
+from test import getWordFlowHighlights
 from model import trainModel
 from get_highlight_list_groundtruth import processGroundTruth
 import os
 from os import listdir
+from post_processing import hangover_highlights
+from audio_processing import getBaselinePrediction
+import sklearn.metrics as metrics
+import matplotlib.pyplot as plt
 
 ''' 
 Main script. 
@@ -59,7 +65,7 @@ try:
 
 except getopt.GetoptError:
     # Print something useful
-    print('usage: main.py -a <audio_path> -v <videos_path> -n <name_of_game> -t <training_parameter> -g <generateGroundTruth>')
+    print('usage: main.py -t <trainingBool> -g <generateGroundTruth> -m <saveMFCC> -a <audioTestFile>')
     sys.exit(2)
 
 
@@ -71,35 +77,74 @@ for f in listdir('video'):
         continue
     gameNames.append(f.replace(".mp4", ""))
 
+
 # If user wants to compare the summary and the game footage to extract highlights frames to train the model on.
 if (generateGroundTruth == 1):
     print("Succesfully entered Ground-Truth generation!")
     processGroundTruth(gameNames)
 
 
+# If user wants to train the model
 if (trainingBool == 1):
-    nEpochs = 20
+    nEpochs = 15
     if (saveMFCC == 1):
         # Generation of training MFCCs
         for g in gameNames:
             generateTrainingMFCCs('audio/train', 'labels', g)
 
     # load mfcc correctly
-    trained_model = trainModel(nEpochs, gameNames)
+    model = generateModel()
+
+    model.compile(loss='binary_crossentropy',
+                  optimizer=keras.optimizers.Adam(lr=0.0001),
+                  metrics=['accuracy', valAccTimesAcc])
+
+    trainModel(nEpochs, gameNames, model)
 
 else:
-    trained_model = generateModel()
-    trained_model.load_weights('model_weights.h5')
+    model = generateModel()
+    model.load_weights('model_weights.h5')
 # PREDICTION
 #
 #
 #
 if (audioTestFile):
-    prediction, baseline, test_reference = generatePrediction(audioTestFile, trained_model)
-    print(prediction.shape[0])
-    print(baseline.shape[0])
-    print(test_reference.shape[0])
+    X_test, y_test = generatePrediction(audioTestFile)
 
-    # Print accuracies for each approach
+    # Prediction using trained model
+    prediction = model.predict(X_test)
+    np.savetxt('pred.csv', prediction, delimiter=',')
+    prediction_array = np.asarray(prediction)
+    threshold = abs(max(prediction_array) - min(prediction_array))/2
+    hangover_prediction = hangover_highlights(prediction_array, threshold)
+    model_prediction = np.asarray(hangover_prediction)
+
+    # Prediction using baseline
+    baseline = np.asarray(getBaselinePrediction(audioTestFile))
+
+    # Load test reference
+    nameStringTest = audioTestFile.replace(".mp3", "").replace("audio/test/","")
+    my_data = np.genfromtxt('labels/%s.csv' % (nameStringTest), dtype='int', delimiter=',')
+    test_reference = np.asarray(my_data)
+
+
+    wf_pred = getWordFlowHighlights(audioTestFile)
+    print(wf_pred.shape[0])
+    length = int(min(model_prediction.shape[0], baseline.shape[0], test_reference.shape[0], wf_pred.shape[0]))
+    print(length)
+    acc_pred = np.sum((model_prediction[0:length] == test_reference[0:length]))/length
+    acc_base = np.sum((baseline[0:length] == test_reference[0:length]))/length
+    acc_wf = np.sum((wf_pred[0:length] == test_reference[0:length]))/length
+
+
+    print(test_reference)
+    print(model_prediction)
+    print(baseline)
+    print(wf_pred)
+    print("Accuracy of the trained model on this game: %s" % acc_pred)
+    print("Accuracy of the baseline predictor on this game: %s" % acc_base)
+    print("Accuracy of the wordflow predictor on this game: %s" % acc_wf)
+
+
 
 
