@@ -119,13 +119,13 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
     if (test == True):
         nMFCinSec = int(10/multiplier)
         hop_length = int(multiplier * sample_rate / 32)
-        for h in range(int(len(audMono)/sample_rate)):
+        for s in range(int(len(audMono)/sample_rate)):
             for i in range(nMFCinSec):
                 if not os.path.exists('mfcc/test/%s/'%(nameString)):
                     os.makedirs('mfcc/test/%s/'%(nameString))
-                out = 'mfcc/test/%s/MFC_%s_%s.png'%(nameString,h,i)
+                out = 'mfcc/test/%s/MFC_%s_%s.png'%(nameString,str(s).zfill(5),i)
                 # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
-                start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
+                start = int(s*sample_rate + i*(sample_rate/(10/multiplier)))
                 # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
                 stop = int(start + multiplier*sample_rate)
                 # Generates 10 MFC Spectrograms per second on the whole audio file
@@ -133,7 +133,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
 
     for h in highlights_timestamps:
-        print("Saving Highlight MFCC at timestamp %s s" % h)
+        print("Saving Highlight MFCC at timestamp t = %s s" % h)
         h = int(h)
         specs = []
         nMFCinSec = int(10/multiplier)
@@ -142,7 +142,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_h/'%(text,prefix,nameString)):
                 os.makedirs('mfcc/%s/%s%s_h/'%(text,prefix,nameString))
-            out = 'mfcc/%s/%s%s_h/MFC_%s_%s.png'%(text,prefix,nameString,h,i)
+            out = 'mfcc/%s/%s%s_h/MFC_%s_%s.png'%(text,prefix,nameString,str(h).zfill(5),i)
             # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
             start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
@@ -152,7 +152,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
 
     for l in lowlights_timestamps:
-        print("Saving Lowlight MFCC at timestamp %s s" % l)
+        print("Saving Lowlight MFCC at timestamp t = %s s" % l)
         l = int(l)
         specs = []
         nMFCinSec = int(10 / multiplier)
@@ -161,7 +161,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_l/' % (text, prefix, nameString)):
                 os.makedirs('mfcc/%s/%s%s_l/' % (text, prefix, nameString))
-            out = 'mfcc/%s/%s%s_l/MFC_%s_%s.png' % (text, prefix, nameString, l, i)
+            out = 'mfcc/%s/%s%s_l/MFC_%s_%s.png' % (text, prefix, nameString, str(l).zfill(5), i)
             # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
             start = int(h * sample_rate + i * (sample_rate / (10 / multiplier)))
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
@@ -170,23 +170,19 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
             write_mfcc_image(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
 
 
-def generateTrainingMFCCs(audiosTrainPath, labelsPath, nameString):
-    print("Generating training MFCCs...")
-    for filename in os.listdir(audiosTrainPath):
-        nameString = filename.replace(".mp3", "")  # get rid of the .mp3 extension
-        #list = []
-        print(filename)
+def generateTrainingMFCCs(audiosTrainPath, labelsPath, gameName):
+    print("Generating training MFCCs for game %s" % gameName)
 
-        highlights_timestamps = []
-        lowlights_timestamps = []
+    highlights_timestamps = []
+    lowlights_timestamps = []
 
-        my_data = genfromtxt('%s/%s.csv'%(labelsPath, nameString), delimiter=',')
-        for row in my_data:
-            if row[0] > 0:
-                highlights_timestamps.append(int(row[0]))
-            if row[1] > 0:
-                lowlights_timestamps.append(int(row[1]))
+    my_data = genfromtxt('%s/%s.csv'%(labelsPath, gameName), delimiter=',')
+    for row in my_data:
+        if row[0] > 0:
+            highlights_timestamps.append(int(row[0]))
+        if row[1] > 0:
+            lowlights_timestamps.append(int(row[1]))
 
-        audioFile = '%s/%s.mp3'%(audiosTrainPath, nameString)
-        generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timestamps)
-    print("Successfully generated training MFCCs!")
+    audioFile = '%s/%s.mp3'%(audiosTrainPath, gameName)
+    generateMFCC(audioFile, gameName, highlights_timestamps, lowlights_timestamps)
+    print("Successfully generated training MFCCs for game %s!" % gameName)

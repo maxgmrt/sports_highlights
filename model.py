@@ -19,6 +19,7 @@ import numpy as np
 from tensorflow.python.keras.layers import Input, Dense
 from tensorflow.python.keras.models import Sequential
 from sklearn.utils import class_weight
+import csv
 
 
 def generateModel():
@@ -54,23 +55,30 @@ def generateModel():
 
 #CALLBACKS AND EARLY STOPPING
 def valAccTimesAcc(val_acc, acc):
-    return val_acc*acc
+    return val_acc * acc
 
+def valLossTimesLoss(val_loss, loss):
+    return (val_loss + 5 * loss)
 
 def trainModel(nEpochs, gameNames, model):
     MFC_lowlight = []
     MFC_highlight = []
 
     for g in gameNames:
-        MFC_lowlight = MFC_lowlight + load_images_from_folder('mfcc/train/%s_l'%(g))
-        MFC_highlight = MFC_highlight + load_images_from_folder('mfcc/train/%s_h'%(g))
+        print('Loading MFC Spectrograms from game %s' % g)
+        MFC_highlight = MFC_highlight + load_images_from_folder('mfcc/train/%s_h' % g)
+        MFC_lowlight = MFC_lowlight + load_images_from_folder('mfcc/train/%s_l' % g)
+
+
+    print('Successfully loaded %s highlight MFC spectrograms of dimensions %s x %s' % (len(MFC_highlight), MFC_highlight[0].shape[0], MFC_highlight[0].shape[1]))
+    print('Successfully loaded %s lowlight MFC spectrograms of dimensions %s x %s' % (len(MFC_lowlight), MFC_lowlight[0].shape[0], MFC_lowlight[0].shape[1]))
 
     MFC_train = MFC_highlight + MFC_lowlight
 
     print('number of total training mfcc: %s' % len(MFC_train))
 
     X_train = np.asarray(MFC_train)
-    X_train = np.array([x.reshape( (40, 33, 1) ) for x in X_train])
+    X_train = np.array([x.reshape((40, 33, 1)) for x in X_train])
 
     y_train = []
     for i in range(len(MFC_highlight)):
@@ -80,18 +88,6 @@ def trainModel(nEpochs, gameNames, model):
         y_train.append(0)
 
     print(len(y_train))
-    zeros = 0
-    ones = 0
-
-    for i in range(len(y_train)):
-        if y_train[i] == 0:
-            zeros = zeros + 1
-        if y_train[i] == 1:
-            ones = ones + 1
-
-    print("this is th enimber of ones %s"% ones)
-    print("this is th enimber of eros %s"% zeros)
-
 
     y_train = np.asarray(y_train)
     print(1/float(len(MFC_lowlight)/len(MFC_train)))
@@ -103,13 +99,12 @@ def trainModel(nEpochs, gameNames, model):
     class_weights = {i: class_weights[i] for i in range(2)}
     print(class_weights)
 
-    print('class distribution is %s / %s' % (float(len(MFC_lowlight)/len(MFC_train)), float(len(MFC_highlight)/len(MFC_train))))
-    batch_size = 40
+    batch_size = 32
 
     x_train_split, x_val, y_train_split, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle= True)
-    print()
+
     # Checkpoint callback
-    checkpoint_callback = ModelCheckpoint('model'+'.h5', monitor='loss', verbose=1, save_best_only=True, mode='min')
+    checkpoint_callback = ModelCheckpoint('model'+'.h5', monitor='valLossTimesLoss', verbose=1, save_best_only=True, mode='min')
 
     # Train Model
     model.fit(x_train_split, y_train_split, shuffle = True, batch_size=batch_size, class_weight = class_weights, steps_per_epoch = int(len(x_train_split) / batch_size), validation_data = (x_val, y_val), epochs = nEpochs, callbacks = [checkpoint_callback])

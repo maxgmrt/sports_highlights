@@ -4,12 +4,18 @@ import cv2
 
 def load_images_from_folder(folder):
     spectrograms = []
-    
+    filenames = []
+
     for filename in os.listdir(folder):
-        img = cv2.imread(os.path.join(folder,filename))
+        filenames.append(filename)
+    filenames.sort()
+
+    for f in filenames:
+        img = cv2.imread(os.path.join(folder,f))
         imgbw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if img is not None:
             spectrograms.append(imgbw)
+
     return spectrograms
 
 # From a list of frame numbers, returns a list of time stamps
