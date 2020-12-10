@@ -162,5 +162,5 @@ if (audioTestFile):
     print("Accuracy of the baseline predictor on this game: %s" % acc_base)
     print("Accuracy of the wordflow predictor on this game: %s" % acc_wf)
 
-if (videoTestFile):
-    edit_video(videoTestFile, highlights, debug=False)
+#if (videoTestFile):
+    #edit_video(videoTestFile, highlights, debug=False)
