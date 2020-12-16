@@ -1,5 +1,6 @@
 import numpy as np
 from utils import load_images_from_folder
+from utils import load_pickle_from_folder
 from audio_processing import generateMFCC
 from audio_processing import getBaselinePrediction
 from audio_processing import getVoxIsolatedMFC
@@ -9,14 +10,13 @@ import os
 
 
 def generatePrediction(audioTestFile):
-
     # Generation of test MFCCs
     nameStringTest = audioTestFile.replace(".mp3", "").replace("audio/test/","")
     if not os.path.exists('mfcc/test/%s' % (nameStringTest)):
         os.makedirs('mfcc/test/%s' % (nameStringTest))
         generateMFCC(audioTestFile, nameStringTest,  [], [], macro=False, test=True)
     print('mfcc/test/%s' % nameStringTest)
-    MFC_test = load_images_from_folder('mfcc/test/%s' % nameStringTest)
+    MFC_test = load_pickle_from_folder('mfcc/test/%s' % nameStringTest)
     MFC_test_shaped = []
     for m in MFC_test:
         if (m.shape[0] == 40) & (m.shape[1] == 33):

@@ -15,6 +15,7 @@ import random
 import os
 import utils
 from utils import load_images_from_folder
+from utils import load_pickle_from_folder
 import numpy as np
 from tensorflow.python.keras.layers import Input, Dense
 from tensorflow.python.keras.models import Sequential
@@ -23,6 +24,9 @@ import csv
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
+import random
+import tensorflow as tf
 
 
 def generateModel():
@@ -31,7 +35,7 @@ def generateModel():
     
     # Convolutional layer
     model.add(Conv2D(54, (24, 8), strides=(1, 1), input_shape=input_shape))
-    model.add(MaxPooling2D((1, 3), strides=(1, 1)))
+    model.add(MaxPooling2D((1, 8), strides=(1, 1)))
     model.add(BatchNormalization())
     
     model.add(Flatten())
@@ -39,17 +43,17 @@ def generateModel():
     # Low-rank layer
     model.add(Dense(32, activation = 'relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=0.5))
+    model.add(Dropout(rate=0.7))
 
     # Dense layer 1
     model.add(Dense(128, activation = 'relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=0.5))
+    model.add(Dropout(rate=0.7))
     
     # Dense layer 2
     model.add(Dense(128, activation = 'relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=0.5))
+    model.add(Dropout(rate=0.7))
     
     # Low-rank layer
     model.add(Dense(1, activation = 'sigmoid'))
@@ -61,7 +65,7 @@ def valAccTimesAcc(val_acc, acc):
     return val_acc * acc
 
 def valLossTimesLoss(val_loss, loss):
-    return (val_loss + 5 * loss)
+    return (loss)
 
 def trainModel(nEpochs, gameNames, model):
     MFC_lowlight = []
@@ -69,8 +73,8 @@ def trainModel(nEpochs, gameNames, model):
 
     for g in gameNames:
         print('Loading MFC Spectrograms from game %s' % g)
-        MFC_highlight = MFC_highlight + load_images_from_folder('mfcc/train/%s_h' % g)
-        MFC_lowlight = MFC_lowlight + load_images_from_folder('mfcc/train/%s_l' % g)
+        MFC_highlight = MFC_highlight + load_pickle_from_folder('mfcc/train/%s_h' % g)
+        MFC_lowlight = MFC_lowlight + load_pickle_from_folder('mfcc/train/%s_l' % g)
 
 
     print('Successfully loaded %s highlight MFC spectrograms of dimensions %s x %s' % (len(MFC_highlight), MFC_highlight[0].shape[0], MFC_highlight[0].shape[1]))
@@ -97,26 +101,33 @@ def trainModel(nEpochs, gameNames, model):
     print(1/float(len(MFC_highlight)/len(MFC_train)))
     #classWeight = {0:1/float(len(MFC_lowlight)/len(MFC_train)), 1:1/float(len(MFC_highlight)/len(MFC_train))}
 
-    class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train), y_train)
-    class_weights = {i: class_weights[i] for i in range(2)}
-    print(class_weights)
 
     batch_size = 32
     indices = np.arange(len(MFC_train))
-    x_train_split, x_val, y_train_split, y_val, idx_split, idx_val = train_test_split(X_train, y_train, indices, test_size=0.2) #shuffle= True)
-    print(idx_split)
-    print(idx_val)
+    #x_train_split, x_val, y_train_split, y_val, idx_split, idx_val = train_test_split(X_train, y_train, indices, test_size=0.2) #shuffle= True)
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=(random.randint(0,len(MFC_train))))
+    sss.get_n_splits(X_train, y_train)
 
-    print(len(idx_split))
-    print(len(idx_val))
+    for train_index, val_index in sss.split(X_train, y_train):
+        print("TRAIN:", train_index, "TEST:", val_index)
+        x_train_split, x_val = X_train[train_index], X_train[val_index]
+        y_train_split, y_val = y_train[train_index], y_train[val_index]
+
+    #print('y_train cropped is %s' % y_train[idx_split])
+    print('proportion is %s' % ((sum(y_train_split)/sum(y_train))/(2*0.8)))
+    print('proportion is %s' % ((sum(y_val)/sum(y_train))/(2*0.2)))
+
+    class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_split), y_train_split)
+    class_weights = {i: class_weights[i] for i in range(2)}
+    print(class_weights)
 
     # Checkpoint callback
     checkpoint_callback = ModelCheckpoint('model'+'.h5', monitor='loss', verbose=1, save_best_only=True, mode='min')
-
+    earlystop = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=2, verbose=1, mode='min',)
     # Train Model class_weight=class_weights
     model.fit(x_train_split, y_train_split, shuffle=True, batch_size=batch_size, class_weight=class_weights,
               steps_per_epoch=int(len(x_train_split) / batch_size), validation_data=(x_val, y_val),
-              epochs=nEpochs, callbacks=[checkpoint_callback])
+              epochs=nEpochs, callbacks=[earlystop], verbose = 1)
 
     model.save_weights('model_weights.h5')
     return

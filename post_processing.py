@@ -28,6 +28,23 @@ def hangover_highlights(prediction, threshold):
     return hangover_prediction
 
 
+
+
+def binarizePrediction(prediction, threshold):
+    average_prediction = []
+    processed_prediction = []
+
+    for i in range(int(len(prediction)/10)):
+        average_prediction.append(np.mean(prediction[10*i:10*i+9]))
+
+        if average_prediction[i] > threshold:
+            processed_prediction.append(1)
+        else:
+            processed_prediction.append(0)
+
+    return processed_prediction
+
+
 def processPrediction(prediction):
     maxPred = max(prediction)
     minPred = min(prediction)
@@ -39,3 +56,15 @@ def processPrediction(prediction):
         else:
             processedPred.append(1)
     return processedPred
+
+
+def processTimestamps(timestamps):
+    processed_timestamps = []
+    mean_timestamps = []
+    for t in timestamps:
+        temp = []
+        for u in timestamps:
+            if abs(t-u) <= 3:
+                temp.append(u)
+
+    return

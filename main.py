@@ -15,11 +15,17 @@ from get_highlight_list_groundtruth import processGroundTruth
 import os
 from os import listdir
 from post_processing import hangover_highlights
+from post_processing import binarizePrediction
 from audio_processing import getBaselinePrediction
 import tensorflow as tf
 import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
 from video_utils import edit_video
+import sklearn.metrics as metrics
+import matplotlib.pyplot as plt
+import matplotlib
+
+
 
 ''' 
 Main script. 
@@ -96,7 +102,7 @@ if (generateGroundTruth == 1):
 # If user wants to train the model
 if (trainingBool == 1):
     print("Training model on train MFCCs...")
-    nEpochs = 15
+    nEpochs = 10
     if (saveMFCC == 1):
         print("Saving training MFCCs...")
         # Generation of training MFCCs
@@ -130,9 +136,18 @@ if (audioTestFile):
     print(prediction)
     np.savetxt('pred.csv', prediction, delimiter=',')
     prediction_array = np.asarray(prediction)
+
+    print('max of prediction is %s' % max(prediction_array))
+    print('min of prediction is %s' % min(prediction_array))
+    print('mean of prediction is %s' % np.mean(prediction_array))
+    print('median of prediction is %s' % np.median(prediction_array))
+
     threshold = abs(max(prediction_array) - min(prediction_array))/2
-    hangover_prediction = hangover_highlights(prediction_array, threshold)
-    model_prediction = np.asarray(hangover_prediction)
+    #hangover_prediction = hangover_highlights(prediction_array, threshold)
+    #model_prediction = np.asarray(hangover_prediction)
+    processed_prediction = binarizePrediction(prediction, threshold)
+    model_prediction = np.asarray(processed_prediction)
+
 
     # Prediction using baseline
     baseline = np.asarray(getBaselinePrediction(audioTestFile))
@@ -154,10 +169,18 @@ if (audioTestFile):
     highlights = np.where(model_prediction == 1)
     print(highlights)
 
+    print('true labels')
     print(test_reference)
+
+    print('model prediction')
     print(model_prediction)
+
+    print('baseline prediction')
     print(baseline)
+
+    print('wordflow prediction')
     print(wf_pred)
+
     print("Accuracy of the trained model on this game: %s" % acc_pred)
     print("Accuracy of the baseline predictor on this game: %s" % acc_base)
     print("Accuracy of the wordflow predictor on this game: %s" % acc_wf)
