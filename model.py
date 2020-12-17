@@ -43,17 +43,17 @@ def generateModel():
     # Low-rank layer
     model.add(Dense(32, activation = 'relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=0.7))
+    model.add(Dropout(rate=0.5))
 
     # Dense layer 1
     model.add(Dense(128, activation = 'relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=0.7))
+    model.add(Dropout(rate=0.5))
     
     # Dense layer 2
     model.add(Dense(128, activation = 'relu'))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=0.7))
+    model.add(Dropout(rate=0.5))
     
     # Low-rank layer
     model.add(Dense(1, activation = 'sigmoid'))
@@ -85,6 +85,13 @@ def trainModel(nEpochs, gameNames, model):
     print('number of total training mfcc: %s' % len(MFC_train))
 
     X_train = np.asarray(MFC_train)
+
+    means = []
+    for s in range(X_train.shape[0]):
+        means.append(int(np.mean(X_train[s])))
+
+    np.savetxt('MFCSpec_means_train.csv', means, delimiter=',')
+
     X_train = np.array([x.reshape((40, 33, 1)) for x in X_train])
 
     y_train = []
@@ -105,11 +112,11 @@ def trainModel(nEpochs, gameNames, model):
     batch_size = 32
     indices = np.arange(len(MFC_train))
     #x_train_split, x_val, y_train_split, y_val, idx_split, idx_val = train_test_split(X_train, y_train, indices, test_size=0.2) #shuffle= True)
-    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=(random.randint(0,len(MFC_train))))
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.25, random_state=(random.randint(0,len(MFC_train))))
     sss.get_n_splits(X_train, y_train)
 
     for train_index, val_index in sss.split(X_train, y_train):
-        print("TRAIN:", train_index, "TEST:", val_index)
+        #print("TRAIN:", train_index, "TEST:", val_index)
         x_train_split, x_val = X_train[train_index], X_train[val_index]
         y_train_split, y_val = y_train[train_index], y_train[val_index]
 

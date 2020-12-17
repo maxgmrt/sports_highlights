@@ -23,9 +23,15 @@ def generatePrediction(audioTestFile):
             MFC_test_shaped.append(m)
     X_test = np.asarray(MFC_test_shaped)
     X_test = np.array([x.reshape((40, 33, 1)) for x in X_test])
-    y_test = np.ones(len(MFC_test))
 
-    return X_test, y_test
+    means=[]
+
+    for s in range(X_test.shape[0]):
+        means.append(int(np.mean(X_test[s])))
+
+    np.savetxt('MFCSpec_means_test.csv', means, delimiter=',')
+
+    return X_test
 
 
 def getWordFlowHighlights(audioTestFile):
