@@ -24,6 +24,7 @@ In a terminal, run:
     python3 main.py -t <0 or 1> -g <0 or 1> -m <0 or 1> -a <path to test audio> -v <path to test video>
 
 mandatory arguments:
+
 <-t>: defines whether or not training will be performed. Possible values: 1 (yes) or 0 (no)
 
 <-g>: defines if algorithm must generate Ground-Truth from video comparison. If yes, a list of highlights will be stored in a .csv file in labels/groundtruth/. Possible values: 1 (yes) or 0 (no)
