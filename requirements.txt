@@ -12,3 +12,4 @@ python-csv
 opencv-python
 scikit-image
 multiprocessing
+zipp
