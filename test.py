@@ -19,10 +19,10 @@ def generatePrediction(audioTestFile):
     MFC_test = load_pickle_from_folder('mfcc/test/%s' % nameStringTest)
     MFC_test_shaped = []
     for m in MFC_test:
-        if (m.shape[0] == 40) & (m.shape[1] == 33):
+        if (m.shape[0] == 40) & (m.shape[1] == 32):
             MFC_test_shaped.append(m)
     X_test = np.asarray(MFC_test_shaped)
-    X_test = np.array([x.reshape((40, 33, 1)) for x in X_test])
+    X_test = np.array([x.reshape((40, 32, 1)) for x in X_test])
 
     means=[]
 

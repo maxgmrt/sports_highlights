@@ -40,3 +40,9 @@ def frameToTimestamp(highlights_frame_number, fps_game):
     for i in highlights_frame_number:
         highlights_timestamps.append(i/fps_game)
     return highlights_timestamps
+
+def scale_minmax(X, min=0.0, max=1.0):
+    X_std = (X - X.min()) / (X.max() - X.min())
+    X_scaled = X_std * (max - min) + min
+    return X_scaled
+

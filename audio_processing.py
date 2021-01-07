@@ -3,10 +3,11 @@ from skimage import io
 import librosa
 import numpy as np
 import os
-import csv
 from numpy import genfromtxt
 from skimage import img_as_ubyte
 import pickle
+import utils
+from utils import scale_minmax
 
 # outputs the one-channel version of a two-channels audio file
 def getMono(audio_data):
@@ -74,10 +75,7 @@ def getVoxIsolatedMFC(audioTestFile):
     return S_test, sample_rate
 
 
-def scale_minmax(X, min=0.0, max=1.0):
-    X_std = (X - X.min()) / (X.max() - X.min())
-    X_scaled = X_std * (max - min) + min
-    return X_scaled
+
 
 def write_mfcc_image(y, sr, out, hop_length, write=False):
     # use log-melspectrogram
@@ -105,8 +103,8 @@ def renormalize(mels, min1, max1, min2, max2):
     return (delta2 * (mels - min1) / delta1) + min2
 
 
-def write_mfcc(y, sr, out, hop_length, write=False):
-    mels = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=40)
+def write_mfcc(y, sr, out, write=False):
+    mels = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
     #mels_scaled = scale_minmax(mels, 0, 1000)
     #mels = np.log(mels + 1e-9) # add small number to avoid log(0)
     #mels = librosa.util.normalize(mels)
@@ -135,9 +133,6 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
     if (test == True):
         nMFCinSec = int(10/multiplier)
-        hop_length = int(multiplier * sample_rate / 32)
-        #hop_length = 512
-        print('hop_length is %s'%hop_length)
         for s in range(int(len(audMono)/sample_rate)):
             for i in range(nMFCinSec):
                 if not os.path.exists('mfcc/test/%s/'%(nameString)):
@@ -148,7 +143,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
                 # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
                 stop = int(start + multiplier*sample_rate)
                 # Generates 10 MFC Spectrograms per second on the whole audio file
-                write_mfcc(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
+                write_mfcc(audMono[start:stop], sr=sample_rate, out=out, write=True)
 
 
     for h in highlights_timestamps:
@@ -156,9 +151,6 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         h = int(h)
         specs = []
         nMFCinSec = int(10/multiplier)
-        hop_length = int(multiplier * sample_rate / 32)
-        #hop_length = 512
-        print('hop_length is %s' % hop_length)
 
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_h/'%(text,prefix,nameString)):
@@ -169,7 +161,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
             stop = int(start + multiplier*sample_rate)
 
-            write_mfcc(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
+            write_mfcc(audMono[start:stop], sr=sample_rate, out=out, write=True)
 
 
     for l in lowlights_timestamps:
@@ -177,9 +169,6 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         l = int(l)
         specs = []
         nMFCinSec = int(10 / multiplier)
-        hop_length = int(multiplier * sample_rate / 32)
-        #hop_length = 512
-        print('hop_length is %s' % hop_length)
 
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_l/' % (text, prefix, nameString)):
@@ -190,7 +179,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
             stop = int(start + multiplier * sample_rate)
 
-            write_mfcc(audMono[start:stop], sr=sample_rate, out=out, hop_length=hop_length, write=True)
+            write_mfcc(audMono[start:stop], sr=sample_rate, out=out, write=True)
 
 
 def generateTrainingMFCCs(audiosTrainPath, labelsPath, gameName):

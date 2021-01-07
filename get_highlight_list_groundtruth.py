@@ -42,7 +42,8 @@ def processGroundTruth(gameNames):
 
         with open('labels/%s_GroundTruth.csv' % g, "wb") as f:
             writer = csv.writer(f)
-            writer.writerows(highlights_timestamps)
+            writer.writerows(map(lambda x: [x], highlights_timestamps))
+            f.close()
 
 
 def get_highlight_list(gameFile, fpsGame, sumFile, framesPath, overwrite, every, chunk_size):

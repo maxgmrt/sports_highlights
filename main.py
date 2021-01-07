@@ -48,6 +48,7 @@ mandatory arguments:
 
 <-a, --audioTestFile>:
 
+optional arguments:
 <-v, --videoTestFile>:
 '''
 

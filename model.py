@@ -31,10 +31,10 @@ import tensorflow as tf
 
 def generateModel():
     model = Sequential()
-    input_shape=(40, 33, 1)
+    input_shape=(40, 32, 1)
     
     # Convolutional layer
-    model.add(Conv2D(54, (24, 8), strides=(1, 1), input_shape=input_shape))
+    model.add(Conv2D(54, (20, 8), strides=(1, 1), input_shape=input_shape))
     model.add(MaxPooling2D((1, 8), strides=(1, 1)))
     model.add(BatchNormalization())
     
@@ -92,7 +92,7 @@ def trainModel(nEpochs, gameNames, model):
 
     np.savetxt('MFCSpec_means_train.csv', means, delimiter=',')
 
-    X_train = np.array([x.reshape((40, 33, 1)) for x in X_train])
+    X_train = np.array([x.reshape((40, 32, 1)) for x in X_train])
 
     y_train = []
     for i in range(len(MFC_highlight)):
