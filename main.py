@@ -31,8 +31,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
 from matplotlib import pyplot
+from keras_sequential_ascii import keras2ascii
 
-
+# GLOBAL VARIABLES
+SHOW_ARCH = 1
 
 ''' 
 Main script. 
@@ -104,17 +106,20 @@ for f in listdir('video'):
 if (generateGroundTruth == 1):
     print("Succesfully entered Ground-Truth generation!")
     processGroundTruth(gameNames)
+    print("Succesfully extracted highlights from game footage, see .csv files in labels/ folder")
+    sys.exit()
+
+if (saveMFCC == 1):
+    print("Saving training MFCCs...")
+    # Generation of training MFCCs
+    for g in gameNames:
+        generateTrainingMFCCs('audio/train', 'labels', g)
 
 
 # If user wants to train the model
 if (trainingBool == 1):
     print("Training model on train MFCCs...")
     nEpochs = 10
-    if (saveMFCC == 1):
-        print("Saving training MFCCs...")
-        # Generation of training MFCCs
-        for g in gameNames:
-            generateTrainingMFCCs('audio/train', 'labels', g)
 
     # load mfcc correctly
     model = generateModel()
@@ -131,6 +136,9 @@ if (trainingBool == 0):
     print("Loading pre-existing model...")
     model = generateModel()
     model.load_weights('model_weights.h5')
+
+if (SHOW_ARCH == 1):
+    keras2ascii(model)
 
 
 # PREDICTION
@@ -161,7 +169,6 @@ if (audioTestFile):
 
     # Prediction using baseline
     baseline = np.asarray(getBaselinePrediction(audioTestFile))
-
 
     wf_pred = getWordFlowHighlights(audioTestFile)
     #print(wf_pred.shape[0])

@@ -131,6 +131,10 @@ def walk(source_image, directory, number=1):
 
 def compare_frame_video(source_image_path, video_path, frames_jump_comparison):
     source_images_raw = []
+
+    if not os.path.exists(source_image_path):
+        os.makedirs(source_image_path)
+
     for filename in os.listdir(source_image_path):
         source_images_raw.append(cv2.imread(os.path.join(source_image_path,filename)))
     source_images = []
@@ -140,16 +144,6 @@ def compare_frame_video(source_image_path, video_path, frames_jump_comparison):
     print('\n--reading video:')
     highlights_frame_number = parse_video(source_images, video_path, frames_jump_comparison)
 
-    #print('\n\n--results:')
-    #results to cli
-    #n = 0
-    #for d in similarities:
-    #    n += 1
-    #    print('#%s\t%s\t: %s' % (n, d['frame'], d['similarity']))
-
-    #seconds_taken = time.clock() - start
-    #time_taken = str(datetime.timedelta(seconds=seconds_taken))
-    #print('\n--time taken: \n%s\n' % time_taken)
     return highlights_frame_number
 
 

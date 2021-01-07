@@ -28,8 +28,6 @@ def hangover_highlights(prediction, threshold):
     return hangover_prediction
 
 
-
-
 def binarizePrediction(prediction, threshold):
     average_prediction = []
     processed_prediction = []

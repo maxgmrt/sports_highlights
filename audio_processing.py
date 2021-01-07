@@ -52,9 +52,7 @@ def getVoxIsolatedMFC(audioTestFile):
                                            metric='cosine',
                                            width=int(librosa.time_to_frames(2, sr=sample_rate)))
 
-    # The output of the filter shouldn't be greater than the input
-    # if we assume signals are additive.  Taking the pointwise minimium
-    # with the input spectrum forces this.
+
         S_filter = np.minimum(S_full, S_filter)
 
         margin_i, margin_v = 2, 10
@@ -68,8 +66,6 @@ def getVoxIsolatedMFC(audioTestFile):
                                    margin_v * S_filter,
                                    power=power)
 
-    # Once we have the masks, simply multiply them with the input spectrum
-    # to separate the components
 
         S_vox = mask_v * S_full
         S_test.append(S_vox)
@@ -102,11 +98,21 @@ def write_mfcc_image(y, sr, out, hop_length, write=False):
         skimage.io.imsave(out, img)
     return img
 
+
+def renormalize(mels, min1, max1, min2, max2):
+    delta1 = max1 - min1 #scalar
+    delta2 = max2 - min2 #scalar
+    return (delta2 * (mels - min1) / delta1) + min2
+
+
 def write_mfcc(y, sr, out, hop_length, write=False):
     mels = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=40)
+    #mels_scaled = scale_minmax(mels, 0, 1000)
     #mels = np.log(mels + 1e-9) # add small number to avoid log(0)
     #mels = librosa.util.normalize(mels)
     # min-max scale to fit inside 8-bit range
+    #norm_mels = renormalize(mels, mels.min(), mels.max(), 0, 1000)
+
     if(write == True):
     # save as PNG
         pickle.dump(mels, open('%s.pkl'%out, 'wb'))
@@ -130,6 +136,8 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
     if (test == True):
         nMFCinSec = int(10/multiplier)
         hop_length = int(multiplier * sample_rate / 32)
+        #hop_length = 512
+        print('hop_length is %s'%hop_length)
         for s in range(int(len(audMono)/sample_rate)):
             for i in range(nMFCinSec):
                 if not os.path.exists('mfcc/test/%s/'%(nameString)):
@@ -149,6 +157,8 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         specs = []
         nMFCinSec = int(10/multiplier)
         hop_length = int(multiplier * sample_rate / 32)
+        #hop_length = 512
+        print('hop_length is %s' % hop_length)
 
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_h/'%(text,prefix,nameString)):
@@ -168,6 +178,8 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         specs = []
         nMFCinSec = int(10 / multiplier)
         hop_length = int(multiplier * sample_rate / 32)
+        #hop_length = 512
+        print('hop_length is %s' % hop_length)
 
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_l/' % (text, prefix, nameString)):
