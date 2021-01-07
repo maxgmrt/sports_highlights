@@ -1,0 +1,14 @@
+$ cat requirements.txt 
+numpy
+scikit-learn
+tensorflow
+keras
+matplotlib
+getopt
+keras_sequential_ascii
+librosa
+pickle
+python-csv
+opencv-python
+scikit-image
+multiprocessing
