@@ -34,3 +34,13 @@ mandatory arguments:
 
 optional arguments:
 <-v>: path to test video
+
+## Author
+
+Maximilien Gomart - maximilien.gomart@epfl.ch
+
+## Acknowledgments
+
+AudioVisual Communications Lab (LCAV) @ EPFL
+Prof. Adam Scholefield
+Eric Bezzam
