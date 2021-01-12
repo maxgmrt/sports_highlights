@@ -102,7 +102,7 @@ def renormalize(mels, min1, max1, min2, max2):
 
 def write_mfcc(y, sr, out, write=False):
     mels = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
-    #melslog = np.log(melsnormalized) - np.log(10 ** -5)
+    #melslog = np.log(mels + 1e-9)
     #melsnormalized = librosa.util.normalize(mels)
     #mels_scaled = scale_minmax(mels, 0, 1000)
     #mels = np.log(mels + 1e-9) # add small number to avoid log(0)
@@ -121,7 +121,7 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
 
     # LOAD MP3 FILE
     audMono, sample_rate = librosa.load(audioFile, sr=16000, mono=True)
-    #audMono = librosa.util.normalize(audMono)
+    audMono = librosa.util.normalize(audMono)
 
     multiplier = 1
     text = 'train'
