@@ -32,6 +32,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
 from matplotlib import pyplot
 from keras_sequential_ascii import keras2ascii
+import csv
 
 # GLOBAL VARIABLES
 SHOW_ARCH = 1
@@ -212,6 +213,10 @@ if (audioTestFile):
 
     print('wordflow prediction')
     print(wf_pred)
+
+    with open('predictions_comparison.csv', 'w') as f:
+        writer = csv.writer(f)
+        writer.writerows(zip(test_reference, model_prediction, baseline, wf_pred))
 
     print("Accuracy of the trained model on this game: %s" % acc_pred)
     print("Accuracy of the baseline predictor on this game: %s" % acc_base)
