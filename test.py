@@ -34,11 +34,7 @@ def generatePrediction(audioTestFile):
 def getWordFlowHighlights(audioTestFile):
 
     S_test, sample_rate = getVoxIsolatedMFC(audioTestFile)
-#    if not os.path.exists('mfcc/test/%s_voxiso' % (nameStringTest)):
-#        os.makedirs('mfcc/test/%s_voxiso' % (nameStringTest))
-#        generateMFCC(audioTestFile, nameStringTest,  [], [], macro=True, test=True)
-#
-#    MFC_test_macro = load_images_from_folder('mfcc/test/MACRO_%s' % nameStringTest)
+
     amplitude_average = []
     for i in range(int(len(S_test))):
         amplitude_average.append(np.mean(S_test[i]))

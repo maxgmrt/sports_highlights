@@ -74,17 +74,11 @@ def getVoxIsolatedMFC(audioTestFile):
 
 
 
-
+    # To export MFCCs as images
 def write_mfcc_image(y, sr, out, hop_length, write=False):
-    # use log-melspectrogram
-    # extract a fixed length window
+
     mels = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=40)
-    #mels = np.log(mels + 1e-9) # add small number to avoid log(0)
-    #mels = librosa.util.normalize(mels)
-    # min-max scale to fit inside 8-bit range
     img = scale_minmax(mels, 0, 255)
-    #img = np.flip(img, axis=0) # put low frequencies at the bottom in image
-    #img = 255-img # invert. make black==more energy
     img = np.uint8(img)
     if(write == True):
     # save image as PNG
@@ -100,13 +94,6 @@ def renormalize(mels, min1, max1, min2, max2):
 
 def write_mfcc(y, sr, out, write=False):
     mels = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
-    #melslog = np.log(mels + 1e-9)
-    #melsnormalized = librosa.util.normalize(mels)
-    #mels_scaled = scale_minmax(mels, 0, 1000)
-    #mels = np.log(mels + 1e-9) # add small number to avoid log(0)
-    #mels = librosa.util.normalize(mels)
-    # min-max scale to fit inside 8-bit range
-    #norm_mels = renormalize(mels, mels.min(), mels.max(), 0, 1000)
 
     if(write == True):
     # save as PNG
@@ -114,33 +101,26 @@ def write_mfcc(y, sr, out, write=False):
     return
 
 
+# Generates training MFCCs and stores them as .pkl files under mfcc/ folder
 def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timestamps, macro=False, test=False):
-    #by default, it is set to generate training micro MFC spectrograms
 
     # LOAD MP3 FILE
     audMono, sample_rate = librosa.load(audioFile, sr=16000, mono=True)
     audMono = librosa.util.normalize(audMono)
 
-    multiplier = 1
     text = 'train'
     prefix=''
 
-    if (macro == True):
-        multiplier = 5
-        prefix = 'MACRO_'
-
     if (test == True):
-        nMFCinSec = int(10/multiplier)
+        nMFCinSec = 10
         for s in range(int(len(audMono)/sample_rate)):
             for i in range(nMFCinSec):
                 if not os.path.exists('mfcc/test/%s/'%(nameString)):
                     os.makedirs('mfcc/test/%s/'%(nameString))
                 out = 'mfcc/test/%s/MFC_%s_%s'%(nameString,str(s).zfill(5),i)
-                # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
-                start = int(s*sample_rate + i*(sample_rate/(10/multiplier)))
-                # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
-                stop = int(start + multiplier*sample_rate)
-                # Generates 10 MFC Spectrograms per second on the whole audio file
+                start = int(s*sample_rate + i*(sample_rate/(10)))
+                stop = int(start + sample_rate)
+                # Generates 10 1-second long MFCC series per second on the whole audio file
                 write_mfcc(audMono[start:stop], sr=sample_rate, out=out, write=True)
 
 
@@ -148,16 +128,16 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         print("Saving Highlight MFCC at timestamp t = %s s" % h)
         h = int(h)
         specs = []
-        nMFCinSec = int(10/multiplier)
+        nMFCinSec = 10
 
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_h/'%(text,prefix,nameString)):
                 os.makedirs('mfcc/%s/%s%s_h/'%(text,prefix,nameString))
             out = 'mfcc/%s/%s%s_h/MFC_%s_%s'%(text,prefix,nameString,str(h).zfill(5),i)
             # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
-            start = int(h*sample_rate + i*(sample_rate/(10/multiplier)))
+            start = int(h*sample_rate + i*(sample_rate/(10)))
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
-            stop = int(start + multiplier*sample_rate)
+            stop = int(start + sample_rate)
 
             write_mfcc(audMono[start:stop], sr=sample_rate, out=out, write=True)
 
@@ -166,16 +146,16 @@ def generateMFCC(audioFile, nameString, highlights_timestamps, lowlights_timesta
         print("Saving Lowlight MFCC at timestamp t = %s s" % l)
         l = int(l)
         specs = []
-        nMFCinSec = int(10 / multiplier)
+        nMFCinSec = 10
 
         for i in range(nMFCinSec):
             if not os.path.exists('mfcc/%s/%s%s_l/' % (text, prefix, nameString)):
                 os.makedirs('mfcc/%s/%s%s_l/' % (text, prefix, nameString))
             out = 'mfcc/%s/%s%s_l/MFC_%s_%s' % (text, prefix, nameString, str(l).zfill(5), i)
             # MICRO: 1 MFC every 0.1 second / MACRO: 1 MFC every 0.5 second
-            start = int(h * sample_rate + i * (sample_rate / (10 / multiplier)))
+            start = int(h * sample_rate + i * (sample_rate / 10))
             # MICRO: Lasts for 1 seconds / MACRO: Lasts for 5 seconds
-            stop = int(start + multiplier * sample_rate)
+            stop = int(start + sample_rate)
 
             write_mfcc(audMono[start:stop], sr=sample_rate, out=out, write=True)
 
