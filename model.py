@@ -2,9 +2,6 @@ import keras
 from keras.layers import Activation, Dense, Dropout, Conv2D, \
                          Flatten, MaxPooling2D, BatchNormalization
 from keras.models import Sequential
-#from keras import optimizers
-#from keras.optimizers import Adam
-#from keras.callbacks import Callback
 from keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping
@@ -59,13 +56,6 @@ def generateModel():
     model.add(Dense(1, activation = 'sigmoid'))
     return model
 
-
-#CALLBACKS AND EARLY STOPPING
-def valAccTimesAcc(val_acc, acc):
-    return val_acc * acc
-
-def valLossTimesLoss(val_loss, loss):
-    return (loss)
 
 def trainModel(nEpochs, gameNames, model):
     MFC_lowlight = []

@@ -4,9 +4,7 @@ import librosa
 import numpy as np
 import os
 from numpy import genfromtxt
-from skimage import img_as_ubyte
 import pickle
-import utils
 from utils import scale_minmax
 
 # outputs the one-channel version of a two-channels audio file

@@ -55,14 +55,3 @@ def processPrediction(prediction):
             processedPred.append(1)
     return processedPred
 
-
-def processTimestamps(timestamps):
-    processed_timestamps = []
-    mean_timestamps = []
-    for t in timestamps:
-        temp = []
-        for u in timestamps:
-            if abs(t-u) <= 3:
-                temp.append(u)
-
-    return

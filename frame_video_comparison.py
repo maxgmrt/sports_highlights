@@ -3,15 +3,11 @@
 import os
 import operator
 import time
-import datetime
 import warnings
 import cv2
-from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 import sys
-from sys import stdout
-import zipp
 
 from skimage import color
 from skimage.metrics import structural_similarity as ssim

@@ -33,8 +33,9 @@ mandatory arguments:
 
 <-a>: path to test audio
 
-optional arguments:
-<-v>: path to test video
+## Remarks
+
+The video_utils.py file contains code to build a video file from the predicted highlights.
 
 ## Author
 

@@ -2,11 +2,7 @@ from audio_processing import generateTrainingMFCCs
 import getopt
 import sys
 import keras
-from keras.models import load_model
 from model import generateModel
-from model import valAccTimesAcc
-from model import valLossTimesLoss
-from utils import load_images_from_folder
 import numpy as np
 from test import generatePrediction
 from test import getWordFlowHighlights
@@ -14,23 +10,13 @@ from model import trainModel
 from get_highlight_list_groundtruth import processGroundTruth
 import os
 from os import listdir
-from post_processing import hangover_highlights
 from post_processing import binarizePrediction
 from audio_processing import getBaselinePrediction
 import tensorflow as tf
-import sklearn.metrics as metrics
-import matplotlib.pyplot as plt
-from video_utils import edit_video
-import sklearn.metrics as metrics
-import matplotlib.pyplot as plt
-import matplotlib
 from numpy import sqrt
 from numpy import argmax
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 from keras_sequential_ascii import keras2ascii
 import csv
 
@@ -167,27 +153,27 @@ if (audioTestFile):
     # Load test reference
     nameStringTest = audioTestFile.replace(".mp3", "").replace("audio/test/","")
     my_data = np.genfromtxt('labels/%s.csv' % (nameStringTest), dtype='int', delimiter=',')
-    test_reference = np.asarray(my_data)
+    true_labels = np.asarray(my_data)
 
     # Prediction using baseline
     baseline = np.asarray(getBaselinePrediction(audioTestFile))
 
     wf_pred = getWordFlowHighlights(audioTestFile)
     #print(wf_pred.shape[0])
-    length = int(min(len(prediction), baseline.shape[0], test_reference.shape[0], wf_pred.shape[0]))
+    length = int(min(len(prediction), baseline.shape[0], true_labels.shape[0], wf_pred.shape[0]))
     print('length of prediction is %s' % length)
 
-    acc_base = np.sum((baseline[0:length] == test_reference[0:length])) / length
-    acc_wf = np.sum((wf_pred[0:length] == test_reference[0:length])) / length
+    acc_base = np.sum((baseline[0:length] == true_labels[0:length])) / length
+    acc_wf = np.sum((wf_pred[0:length] == true_labels[0:length])) / length
 
     accuracies = []
     for i in range(10000):
         processed_prediction = binarizePrediction(prediction, i/10000)
         model_prediction = np.asarray(processed_prediction)
-        fpr, tpr, thresholds = roc_curve(test_reference[0:length], model_prediction[0:length])
+        fpr, tpr, thresholds = roc_curve(true_labels[0:length], model_prediction[0:length])
         # calculate the g-mean for each threshold
         gmeans = sqrt(tpr * (1 - fpr))
-        accuracies.append(np.sum((model_prediction[0:length] == test_reference[0:length]))/length)
+        accuracies.append(np.sum((model_prediction[0:length] == true_labels[0:length]))/length)
         # locate the index of the largest g-mean
 
     ix = argmax(accuracies)
@@ -197,13 +183,12 @@ if (audioTestFile):
     processed_prediction = binarizePrediction(prediction, ix/10000)
     model_prediction = np.asarray(processed_prediction)
 
-    acc_pred = np.sum((model_prediction[0:length] == test_reference[0:length])) / length
+    acc_pred = np.sum((model_prediction[0:length] == true_labels[0:length])) / length
 
     highlights = np.where(model_prediction == 1)
-    #print(highlights)
 
     print('true labels')
-    print(test_reference)
+    print(true_labels)
 
     print('model prediction')
     print(model_prediction)
@@ -216,24 +201,23 @@ if (audioTestFile):
 
     with open('predictions_comparison.csv', 'w') as f:
         writer = csv.writer(f)
-        writer.writerows(zip(test_reference, model_prediction, baseline, wf_pred))
+        writer.writerows(zip(true_labels, model_prediction, baseline, wf_pred))
 
     print("Accuracy of the trained model on this game: %s" % acc_pred)
     print("Accuracy of the baseline predictor on this game: %s" % acc_base)
     print("Accuracy of the wordflow predictor on this game: %s" % acc_wf)
+    
+    #PLOTS
+    fig, axs = plt.subplots(4)
+    hspace = 0.5
+    plt.subplots_adjust(hspace=hspace, bottom=0, top=1.5)
 
-#if (videoTestFile):
-    #edit_video(videoTestFile, highlights, debug=False)
-
-    #X, y = make_classification(n_samples=10000, n_features=2, n_redundant=0,
-     #                          n_clusters_per_class=1, weights=[0.99], flip_y=0, random_state=4)
-    # split into train/test sets
-    #trainX, testX, trainy, testy = train_test_split(X, y, test_size=0.5, random_state=2, stratify=y)
-    # fit a model
-    #model = LogisticRegression(solver='lbfgs')
-    #model.fit(trainX, trainy)
-    # predict probabilities
-    #yhat = model.predict_proba(testX)
-    # keep probabilities for the positive outcome only
-    #yhat = yhat[:, 1]
-    # calculate roc curves
+    x = np.linspace(0, 18, num=18)
+    axs[0].plot(x, true_labels, color='blue')
+    axs[1].plot(x, model_prediction, color='red')
+    axs[2].plot(x, baseline, color='orange')
+    axs[3].plot(x, wf_pred, color='purple')
+    axs[0].title.set_text('True Labels')
+    axs[1].title.set_text('Model Prediction')
+    axs[2].title.set_text('Energy-based Predictor')
+    axs[3].title.set_text('Wordflow Predictor')
