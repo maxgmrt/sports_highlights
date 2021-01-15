@@ -21,7 +21,7 @@ Labels referung to audio files must be put under labels/.
 ## Running the code
 In a terminal, run:
 
-    python3 main.py -t <0 or 1> -g <0 or 1> -m <0 or 1> -a <path to test audio> -v <path to test video>
+    python3 main.py -t <0 or 1> -g <0 or 1> -m <0 or 1> -a <path to test audio>
 
 mandatory arguments:
 
