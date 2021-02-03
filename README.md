@@ -7,6 +7,7 @@ Detecting sports highlights using audio cues.
 ### Prerequisites
 All needed Python modules and their versions are in the requirements.txt file.
 
+LINK TO DATA: https://drive.google.com/drive/folders/1j9lvsAsphmYoS9KrQ5brehSR2aB1UwL5?usp=sharing
 
 ![Screenshot](folder_structure.jpg)
 
